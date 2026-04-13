@@ -1,0 +1,14 @@
+C:\Users\vipio\Desktop\Proger\Car\TopDownHighwayDrifter\obj\Debug\net9.0-windows\TopDownHighwayDrifter.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\vipio\Desktop\Proger\Car\TopDownHighwayDrifter\obj\Debug\net9.0-windows\TopDownHighwayDrifter.AssemblyInfoInputs.cache
+C:\Users\vipio\Desktop\Proger\Car\TopDownHighwayDrifter\obj\Debug\net9.0-windows\TopDownHighwayDrifter.AssemblyInfo.cs
+C:\Users\vipio\Desktop\Proger\Car\TopDownHighwayDrifter\obj\Debug\net9.0-windows\TopDownHighwayDrifter.csproj.CoreCompileInputs.cache
+C:\Users\vipio\Desktop\Proger\Car\TopDownHighwayDrifter\bin\Debug\net9.0-windows\TopDownHighwayDrifter.exe
+C:\Users\vipio\Desktop\Proger\Car\TopDownHighwayDrifter\bin\Debug\net9.0-windows\TopDownHighwayDrifter.deps.json
+C:\Users\vipio\Desktop\Proger\Car\TopDownHighwayDrifter\bin\Debug\net9.0-windows\TopDownHighwayDrifter.runtimeconfig.json
+C:\Users\vipio\Desktop\Proger\Car\TopDownHighwayDrifter\bin\Debug\net9.0-windows\TopDownHighwayDrifter.dll
+C:\Users\vipio\Desktop\Proger\Car\TopDownHighwayDrifter\bin\Debug\net9.0-windows\TopDownHighwayDrifter.pdb
+C:\Users\vipio\Desktop\Proger\Car\TopDownHighwayDrifter\obj\Debug\net9.0-windows\TopDownHighwayDrifter.dll
+C:\Users\vipio\Desktop\Proger\Car\TopDownHighwayDrifter\obj\Debug\net9.0-windows\refint\TopDownHighwayDrifter.dll
+C:\Users\vipio\Desktop\Proger\Car\TopDownHighwayDrifter\obj\Debug\net9.0-windows\TopDownHighwayDrifter.pdb
+C:\Users\vipio\Desktop\Proger\Car\TopDownHighwayDrifter\obj\Debug\net9.0-windows\TopDownHighwayDrifter.genruntimeconfig.cache
+C:\Users\vipio\Desktop\Proger\Car\TopDownHighwayDrifter\obj\Debug\net9.0-windows\ref\TopDownHighwayDrifter.dll
