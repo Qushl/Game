@@ -139,33 +139,25 @@ namespace TopDownHighwayDrifter
 
             // Применяем трансформацию для следования за игроком
             var state = g.Save();
-            
-            // Переводим в центр экрана
+
             g.TranslateTransform(screenWidth / 2, screenHeight / 2);
             
-            // Камера смотрит перпендикулярно (без вращения)
-            // Смещаем на позицию игрока
             g.TranslateTransform(-Player.WorldX, -Player.WorldY);
 
-            // Сортируем врагов по расстоянию Y (рисуем дальние первыми)
             var sortedEnemies = new List<Enemy>(Enemies);
             sortedEnemies.Sort((a, b) => a.WorldY.CompareTo(b.WorldY));
 
-            // Рисуем дорогу
             DrawRoadOnScreen(g);
 
-            // Рисуем врагов (сортированных по расстоянию)
             foreach (var enemy in sortedEnemies)
             {
                 DrawEnemy(g, enemy);
             }
 
-            // Рисуем игрока в центре экрана (в мировых координатах)
             Player.Draw(g);
 
             g.Restore(state);
 
-            // Рисуем UI (без трансформации)
             DrawUI(g, screenWidth, screenHeight);
         }
 
@@ -211,7 +203,6 @@ namespace TopDownHighwayDrifter
                 dx /= len;
                 dy /= len;
 
-                // Перпендикуляр к дороге
                 float perpX = -dy;
                 float perpY = dx;
 
@@ -235,10 +226,8 @@ namespace TopDownHighwayDrifter
             {
                 using (var roadPath = new System.Drawing.Drawing2D.GraphicsPath())
                 {
-                    // Добавляем все левые точки
                     roadPath.AddLines(leftEdgePoints.ToArray());
-                    
-                    // Добавляем все правые точки в обратном порядке для замыкания фигуры
+
                     for (int i = rightEdgePoints.Count - 1; i >= 0; i--)
                     {
                         roadPath.AddLine(roadPath.GetLastPoint(), rightEdgePoints[i]);

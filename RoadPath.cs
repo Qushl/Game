@@ -66,7 +66,8 @@ namespace TopDownHighwayDrifter
                 if (distance >= segment.StartDistance && 
                     distance < segment.StartDistance + segment.Length)
                 {
-                    float t = (distance - segment.StartDistance) / segment.Length;
+                    // прогресс внутри сегмента
+                    float t = (distance - segment.StartDistance) / segment.Length; 
                     float angle = segment.StartAngle + (segment.EndAngle - segment.StartAngle) * t;
 
                     return new RoadInfo
