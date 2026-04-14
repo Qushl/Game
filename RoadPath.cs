@@ -92,15 +92,18 @@ namespace TopDownHighwayDrifter
         /// <summary>
         /// Получить мировую позицию и угол для точки на дороге
         /// </summary>
-        public void GetWorldPosition(float distance, out float worldX, out float worldY, out float angle)
+        public void GetWorldPosition
+        (
+            float distance, 
+            out float worldX, 
+            out float worldY, 
+            out float angle)
         {
             RoadInfo info = GetRoadInfoAtDistance(distance);
             angle = info.Angle;
 
-            // Вычисляем позицию интегрированием углов
-            // Начинаем с центра экрана
             float currentX = 400;
-            float currentY = 0; // Y = 0 - это исходная позиция
+            float currentY = 0; 
 
             for (int i = 0; i < _segments.Count; i++)
             {
@@ -115,7 +118,7 @@ namespace TopDownHighwayDrifter
                     
                     // Движение ВВЕРХ по экрану = отрицательное Y
                     float dx = seg.Length * (float)Math.Sin(midAngle);
-                    float dy = -seg.Length * (float)Math.Cos(midAngle); // Минус потому что вверх = -Y
+                    float dy = -seg.Length * (float)Math.Cos(midAngle); 
                     
                     currentX += dx;
                     currentY += dy;

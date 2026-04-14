@@ -26,7 +26,8 @@ namespace TopDownHighwayDrifter
             if (len == 0) return Zero;
             return new Vector2(X / len, Y / len);
         }
-
+        
+        // промежуточное значение между А и Б на основе параметра t
         public static Vector2 Lerp(Vector2 a, Vector2 b, float t)
         {
             t = Math.Clamp(t, 0, 1);

@@ -12,3 +12,4 @@ C:\Users\vipio\Desktop\Proger\Car\TopDownHighwayDrifter\obj\Debug\net9.0-windows
 C:\Users\vipio\Desktop\Proger\Car\TopDownHighwayDrifter\obj\Debug\net9.0-windows\TopDownHighwayDrifter.pdb
 C:\Users\vipio\Desktop\Proger\Car\TopDownHighwayDrifter\obj\Debug\net9.0-windows\TopDownHighwayDrifter.genruntimeconfig.cache
 C:\Users\vipio\Desktop\Proger\Car\TopDownHighwayDrifter\obj\Debug\net9.0-windows\ref\TopDownHighwayDrifter.dll
+C:\Users\vipio\Desktop\Proger\Car\TopDownHighwayDrifter\obj\Debug\net9.0-windows\TopDownHighwayDrifter.sourcelink.json

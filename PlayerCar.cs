@@ -14,7 +14,7 @@ namespace TopDownHighwayDrifter
         public float WorldY { get; set; } = 400;
         
         // Угол поворота машины в радианах
-        public float Angle { get; set; } = (float)(-Math.PI / 2); // Вверх по экрану
+        public float Angle { get; set; } = (float)(-Math.PI / 2); 
         
         // Вектор скорости
         public Vector2 Velocity { get; set; } = Vector2.Zero;
@@ -50,23 +50,23 @@ namespace TopDownHighwayDrifter
 
         public override void Update(float scrollSpeed)
         {
-            // 1. Управление поворотом
+            // Управление поворотом
             if (_turningLeft)
                 Angle -= TurnSpeed;
             if (_turningRight)
                 Angle += TurnSpeed;
 
-            // Ограничиваем угол
+            // Применяем ограничение угла от -180 до 180 градусов
             while (Angle > Math.PI) Angle -= (float)(2 * Math.PI);
             while (Angle < -Math.PI) Angle += (float)(2 * Math.PI);
 
-            // 2. Вектор направления
+            // Вектор направления
             Vector2 forward = new Vector2(
                 (float)Math.Cos(Angle),
                 (float)Math.Sin(Angle)
             );
 
-            // 3. Ускорение / Тормоз
+            // Ускорение / Тормоз
             if (_isAccelerating)
             {
                 Velocity = Velocity + (forward * Acceleration);
@@ -76,28 +76,29 @@ namespace TopDownHighwayDrifter
                 Velocity = Velocity - (forward * Acceleration * 0.5f);
             }
 
-            // 4. Ограничение скорости
+            // Ограничение скорости
             float speed = Velocity.Length();
             if (speed > MaxSpeed)
             {
                 Velocity = Velocity.Normalize() * MaxSpeed;
             }
 
-            // 5. Дрифт / Занос
+            // Дрифт / Занос
             if (speed > 0.5f)
             {
                 Vector2 desiredDirection = forward * speed;
+                // За кадр скорость меняется только на 8% в сторону желаемого направления
                 Velocity = Vector2.Lerp(Velocity, desiredDirection, 1 - DriftFactor);
             }
 
-            // 6. Трение
+            // Трение
             Velocity = Velocity * Friction;
 
-            // 7. Интенсивность заноса
+            // Интенсивность заноса
             if (speed > 0.1f)
             {
                 Vector2 normalizedVelocity = Velocity.Normalize();
-                float dot = normalizedVelocity.DotProduct(forward);
+                float dot = normalizedVelocity.DotProduct(forward); // cos
                 DriftIntensity = Math.Max(0, 1 - Math.Abs(dot)) * speed / MaxSpeed;
             }
             else
@@ -105,7 +106,7 @@ namespace TopDownHighwayDrifter
                 DriftIntensity = 0;
             }
 
-            // 8. Дым при заносе
+            // Дым при заносе
             if (DriftIntensity > 0.3f && speed > 2f)
             {
                 var smoke = new DriftSmoke
@@ -120,7 +121,7 @@ namespace TopDownHighwayDrifter
                 SmokeParticles.Add(smoke);
             }
 
-            // 9. Обновляем дым
+            // Обновляем дым
             for (int i = SmokeParticles.Count - 1; i >= 0; i--)
             {
                 SmokeParticles[i].Life -= 0.03f;
@@ -132,15 +133,15 @@ namespace TopDownHighwayDrifter
                     SmokeParticles.RemoveAt(i);
             }
 
-            // 10. Ограничиваем частицы
+            // Ограничиваем частицы
             while (SmokeParticles.Count > 50)
                 SmokeParticles.RemoveAt(0);
 
-            // 11. Перемещаем машину
+            // Перемещаем машину
             WorldX += Velocity.X;
             WorldY += Velocity.Y;
 
-            // Обновляем базовую позицию для совместимости
+            // Обновляем базовую позицию 
             X = WorldX;
             Y = WorldY;
         }

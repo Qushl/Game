@@ -45,7 +45,7 @@ namespace TopDownHighwayDrifter
             // Проверяем столкновения
             CheckCollisions();
 
-            // Создаем новые враги
+            // Создание новых врагов
             _spawnCounter++;
             if (_spawnCounter > _spawnRate)
             {
@@ -58,10 +58,8 @@ namespace TopDownHighwayDrifter
             var enemiesToRemove = new List<Enemy>();
             foreach (var enemy in Enemies)
             {
-                // Враги движутся вверх с постоянной скоростью
                 enemy.WorldY += 3f;
                 
-                // Удаляем врагов, которые уехали далеко позади
                 float distToPlayer = (float)Math.Sqrt(
                     Math.Pow(enemy.WorldX - Player.WorldX, 2) + 
                     Math.Pow(enemy.WorldY - Player.WorldY, 2)
@@ -146,8 +144,6 @@ namespace TopDownHighwayDrifter
             g.TranslateTransform(screenWidth / 2, screenHeight / 2);
             
             // Камера смотрит перпендикулярно (без вращения)
-            // g.RotateTransform(-(float)(Player.Angle * 180 / Math.PI));
-            
             // Смещаем на позицию игрока
             g.TranslateTransform(-Player.WorldX, -Player.WorldY);
 
@@ -178,7 +174,7 @@ namespace TopDownHighwayDrifter
             const float visibleDistance = 2500f;
 
             // Находим текущее расстояние на дороге на основе WorldY
-            float playerDistanceOnRoad = -Player.WorldY; // Y увеличивается вверх, оригинальное расстояние увеличивается вниз
+            float playerDistanceOnRoad = -Player.WorldY; 
             
             float startDist = Math.Max(0, playerDistanceOnRoad - visibleDistance);
             float endDist = playerDistanceOnRoad + visibleDistance;
@@ -199,7 +195,6 @@ namespace TopDownHighwayDrifter
                 _roadPath.GetWorldPosition(segDist1, out float x1, out float y1, out float angle1);
                 _roadPath.GetWorldPosition(segDist2, out float x2, out float y2, out float angle2);
 
-                // Преобразуем в мировые координаты игрока (Y инвертирован)
                 y1 = -y1;
                 y2 = -y2;
 
@@ -240,18 +235,13 @@ namespace TopDownHighwayDrifter
             {
                 using (var roadPath = new System.Drawing.Drawing2D.GraphicsPath())
                 {
-                    roadPath.StartFigure();
-                    for (int i = 1; i < leftEdgePoints.Count; i++)
-                    {
-                        roadPath.AddLine(leftEdgePoints[i - 1], leftEdgePoints[i]);
-                    }
-
+                    // Добавляем все левые точки
+                    roadPath.AddLines(leftEdgePoints.ToArray());
+                    
+                    // Добавляем все правые точки в обратном порядке для замыкания фигуры
                     for (int i = rightEdgePoints.Count - 1; i >= 0; i--)
                     {
-                        int prevIdx = i == rightEdgePoints.Count - 1 ? leftEdgePoints.Count - 1 : i + 1;
-                        PointF from = i == rightEdgePoints.Count - 1 ? 
-                            leftEdgePoints[leftEdgePoints.Count - 1] : rightEdgePoints[prevIdx];
-                        roadPath.AddLine(from, rightEdgePoints[i]);
+                        roadPath.AddLine(roadPath.GetLastPoint(), rightEdgePoints[i]);
                     }
 
                     roadPath.CloseFigure();
@@ -403,7 +393,7 @@ namespace TopDownHighwayDrifter
         public float WorldX { get; set; }
         public float WorldY { get; set; }
         public Color Color { get; set; }
-        public bool WasRewarded { get; set; } = false; // Флаг для отслеживания получения награды
+        public bool WasRewarded { get; set; } = false; 
     }
 }
 
