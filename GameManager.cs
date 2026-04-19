@@ -11,6 +11,8 @@ namespace TopDownHighwayDrifter
         public List<Enemy> Enemies { get; private set; } = new List<Enemy>();
         
         private RoadPath _roadPath;
+        private float _cameraAngle = 0f;
+        private const float CameraTurnLerp = 0.04f;
         private int _spawnCounter = 0;
         private int _spawnRate = 50;
         private Random _random = new Random();
@@ -30,8 +32,10 @@ namespace TopDownHighwayDrifter
         {
             _roadPath = new RoadPath();
             Player = new PlayerCar();
-            Player.WorldX = 400;
-            Player.WorldY = -500;
+            // Старт по центру экрана, чтобы дорога была видна
+            Player.WorldX = screenWidth / 2;
+            Player.WorldY = 0;
+            Player.Angle = (float)(-Math.PI / 2); // Вверх по экрану
         }
 
         public void Update()
@@ -54,26 +58,32 @@ namespace TopDownHighwayDrifter
                 _spawnRate = Math.Max(20, _spawnRate - 1);
             }
 
-            // Обновляем врагов и удаляем тех, которые далеко позади
+            // Обновляем врагов по траектории дороги и удаляем тех, которые далеко позади
             var enemiesToRemove = new List<Enemy>();
+            float playerDistanceOnRoad = -Player.WorldY;
             foreach (var enemy in Enemies)
             {
-                enemy.WorldY += 3f;
-                
+                if (enemy.IsOncoming)
+                {
+                    enemy.Distance -= enemy.Speed;
+                }
+                else
+                {
+                    enemy.Distance += enemy.Speed;
+                }
+                UpdateEnemyWorldPosition(enemy);
                 float distToPlayer = (float)Math.Sqrt(
                     Math.Pow(enemy.WorldX - Player.WorldX, 2) + 
                     Math.Pow(enemy.WorldY - Player.WorldY, 2)
                 );
-                
                 // Добавляем очки за проезд рядом с врагом
                 const float passDistance = 80f; 
                 if (distToPlayer < passDistance && !enemy.WasRewarded)
                 {
-                    _score += 600; // +10 очков (поскольку очки увеличиваются каждый кадр)
+                    _score += 600;
                     enemy.WasRewarded = true;
                 }
-                
-                if (distToPlayer > 3000)
+                if (enemy.Distance < playerDistanceOnRoad - 3000)
                 {
                     enemiesToRemove.Add(enemy);
                 }
@@ -93,8 +103,10 @@ namespace TopDownHighwayDrifter
 
         private void SpawnEnemy()
         {
-            float spawnX = Player.WorldX + (_random.NextSingle() - 0.5f) * 200;
-            float spawnY = Player.WorldY - 800; // Спавним врагов выше
+            // Спавним врага впереди на дороге
+            float playerDistanceOnRoad = -Player.WorldY;
+            float spawnDist = playerDistanceOnRoad + 800;
+            _roadPath.GetWorldPosition(spawnDist, out float spawnX, out float spawnY, out float angle);
 
             Color[] enemyColors = new Color[]
             {
@@ -106,12 +118,22 @@ namespace TopDownHighwayDrifter
                 Color.Yellow
             };
 
+            float minLane = RoadWidth * 0.25f;
+            float maxLane = RoadWidth * 0.45f;
+            float laneOffset = (float)(minLane + _random.NextDouble() * (maxLane - minLane));
+            bool isLeftLane = _random.Next(2) == 0;
+            laneOffset *= isLeftLane ? -1f : 1f;
+            float speed = 0.6f + (float)_random.NextDouble() * 0.6f;
             var enemy = new Enemy
             {
-                WorldX = spawnX,
-                WorldY = spawnY,
+                Distance = spawnDist,
+                Speed = speed,
+                LaneOffset = laneOffset,
+                IsOncoming = isLeftLane,
                 Color = enemyColors[_random.Next(enemyColors.Length)]
             };
+
+            UpdateEnemyWorldPosition(enemy);
             
             Enemies.Add(enemy);
         }
@@ -141,6 +163,10 @@ namespace TopDownHighwayDrifter
             var state = g.Save();
 
             g.TranslateTransform(screenWidth / 2, screenHeight / 2);
+            float targetAngle = GetCameraTargetAngle();
+            _cameraAngle = LerpAngle(_cameraAngle, targetAngle, CameraTurnLerp);
+            float cameraAngleDeg = (float)(_cameraAngle * 180.0 / Math.PI);
+            g.RotateTransform(cameraAngleDeg);
             
             g.TranslateTransform(-Player.WorldX, -Player.WorldY);
 
@@ -164,49 +190,41 @@ namespace TopDownHighwayDrifter
         private void DrawRoadOnScreen(Graphics g)
         {
             const float visibleDistance = 2500f;
-
-            // Находим текущее расстояние на дороге на основе WorldY
-            float playerDistanceOnRoad = -Player.WorldY; 
-            
-            float startDist = Math.Max(0, playerDistanceOnRoad - visibleDistance);
+            float playerDistanceOnRoad = -Player.WorldY;
+            float startDist = playerDistanceOnRoad - visibleDistance; // Может быть отрицательным
             float endDist = playerDistanceOnRoad + visibleDistance;
+
+            // Генерируем сегменты, чтобы гарантировать достаточное покрытие
+            float currentDist = _roadPath.TotalLength;
+            float currentAngle = _roadPath.Segments.Count > 0 ? _roadPath.Segments[^1].EndAngle : 0;
+            // Генерируем ДО конца видимой области + запас
+            while (_roadPath.TotalLength < endDist + 2000)
+            {
+                _roadPath.AddSegment(ref currentDist, ref currentAngle);
+            }
 
             var leftEdgePoints = new List<PointF>();
             var rightEdgePoints = new List<PointF>();
 
-            // Собираем видимые сегменты дороги
-            for (int i = 0; i < _roadPath.Segments.Count; i++)
+            float step = 30f;
+            for (float dist = startDist; dist < endDist; dist += step)
             {
-                var segment = _roadPath.Segments[i];
-                float segDist1 = segment.StartDistance;
-                float segDist2 = segment.StartDistance + segment.Length;
-
-                if (segDist2 < startDist || segDist1 > endDist)
-                    continue;
-
+                float segDist1 = dist;
+                float segDist2 = dist + step;
                 _roadPath.GetWorldPosition(segDist1, out float x1, out float y1, out float angle1);
                 _roadPath.GetWorldPosition(segDist2, out float x2, out float y2, out float angle2);
 
-                y1 = -y1;
-                y2 = -y2;
-
                 float roadWidthHalf = RoadWidth / 2;
-
-                // Направление вдоль дороги
                 float dx = x2 - x1;
                 float dy = y2 - y1;
                 float len = (float)Math.Sqrt(dx * dx + dy * dy);
-                
                 if (len < 0.1f)
                     continue;
-
                 dx /= len;
                 dy /= len;
-
                 float perpX = -dy;
                 float perpY = dx;
 
-                // Края сегмента
                 PointF leftStart = new PointF(x1 - perpX * roadWidthHalf, y1 - perpY * roadWidthHalf);
                 PointF rightStart = new PointF(x1 + perpX * roadWidthHalf, y1 + perpY * roadWidthHalf);
                 PointF leftEnd = new PointF(x2 - perpX * roadWidthHalf, y2 - perpY * roadWidthHalf);
@@ -235,7 +253,7 @@ namespace TopDownHighwayDrifter
 
                     roadPath.CloseFigure();
 
-                    using (var roadBrush = new SolidBrush(Color.FromArgb(100, 100, 100)))
+                    using (var roadBrush = new SolidBrush(Color.FromArgb(180, 180, 180)))
                     {
                         g.FillPath(roadBrush, roadPath);
                     }
@@ -247,6 +265,32 @@ namespace TopDownHighwayDrifter
                 }
 
                 DrawRoadMarkings(g, leftEdgePoints, rightEdgePoints);
+                DrawCenterLine(g, leftEdgePoints, rightEdgePoints);
+            }
+        }
+
+        // Жёлтая пунктирная центральная линия
+        private void DrawCenterLine(Graphics g, List<PointF> leftEdge, List<PointF> rightEdge)
+        {
+            if (leftEdge.Count < 2 || rightEdge.Count < 2)
+                return;
+            using (var pen = new Pen(Color.Yellow, 3) { DashPattern = new float[] { 16, 16 } })
+            {
+                for (int i = 0; i < leftEdge.Count && i < rightEdge.Count; i++)
+                {
+                    var mid = new PointF(
+                        (leftEdge[i].X + rightEdge[i].X) / 2,
+                        (leftEdge[i].Y + rightEdge[i].Y) / 2
+                    );
+                    if (i > 0)
+                    {
+                        var prevMid = new PointF(
+                            (leftEdge[i - 1].X + rightEdge[i - 1].X) / 2,
+                            (leftEdge[i - 1].Y + rightEdge[i - 1].Y) / 2
+                        );
+                        g.DrawLine(pen, prevMid, mid);
+                    }
+                }
             }
         }
 
@@ -364,6 +408,37 @@ namespace TopDownHighwayDrifter
             }
         }
 
+        private void UpdateEnemyWorldPosition(Enemy enemy)
+        {
+            _roadPath.GetWorldPosition(enemy.Distance, out float x, out float y, out float angle);
+
+            float perpX = (float)Math.Cos(angle);
+            float perpY = (float)Math.Sin(angle);
+
+            enemy.WorldX = x + perpX * enemy.LaneOffset;
+            enemy.WorldY = y + perpY * enemy.LaneOffset;
+        }
+
+        private float GetCameraTargetAngle()
+        {
+            float speed = Player.Velocity.Length();
+            if (speed > 0.3f)
+            {
+                float heading = (float)Math.Atan2(Player.Velocity.Y, Player.Velocity.X);
+                return (float)(-heading - Math.PI / 2);
+            }
+
+            return (float)(-Player.Angle - Math.PI / 2);
+        }
+
+        private static float LerpAngle(float current, float target, float t)
+        {
+            float diff = target - current;
+            while (diff > Math.PI) diff -= (float)(2 * Math.PI);
+            while (diff < -Math.PI) diff += (float)(2 * Math.PI);
+            return current + diff * t;
+        }
+
         public void Reset()
         {
             Player = new PlayerCar();
@@ -381,6 +456,10 @@ namespace TopDownHighwayDrifter
     {
         public float WorldX { get; set; }
         public float WorldY { get; set; }
+        public float Distance { get; set; }
+        public float Speed { get; set; }
+        public float LaneOffset { get; set; }
+        public bool IsOncoming { get; set; }
         public Color Color { get; set; }
         public bool WasRewarded { get; set; } = false; 
     }

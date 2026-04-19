@@ -23,8 +23,8 @@ namespace TopDownHighwayDrifter
         public float TurnSpeed { get; set; } = 0.08f;
         public float Acceleration { get; set; } = 0.3f;
         public float MaxSpeed { get; set; } = 10f;
-        public float Friction { get; set; } = 0.93f;
-        public float DriftFactor { get; set; } = 0.92f;
+        public float Friction { get; set; } = 0.97f;
+        public float DriftFactor { get; set; } = 0.97f;
 
         // Дрифт-эффекты
         public float DriftIntensity { get; private set; } = 0;
@@ -38,6 +38,19 @@ namespace TopDownHighwayDrifter
         public PlayerCar() : base(0, 0, 18, 28)
         {
             Color = Color.CornflowerBlue;
+            // Тестовая инициализация дыма для проверки
+            for (int i = 0; i < 10; i++)
+            {
+                SmokeParticles.Add(new DriftSmoke
+                {
+                    X = WorldX,
+                    Y = WorldY + i * 5,
+                    Life = 1.0f - i * 0.08f,
+                    Size = 20 + i * 2,
+                    VelocityX = 0,
+                    VelocityY = 0
+                });
+            }
         }
 
         public void SetInput(bool left, bool right, bool accelerate, bool brake = false)
@@ -107,16 +120,16 @@ namespace TopDownHighwayDrifter
             }
 
             // Дым при заносе
-            if (DriftIntensity > 0.3f && speed > 2f)
+            if (DriftIntensity > 0.2f && speed > 1.5f)
             {
                 var smoke = new DriftSmoke
                 {
-                    X = WorldX - forward.X * 15,
-                    Y = WorldY - forward.Y * 15,
-                    Life = 1.0f,
-                    Size = 8 + DriftIntensity * 15,
-                    VelocityX = (float)(new Random().NextDouble() - 0.5f) * 1.5f,
-                    VelocityY = (float)(new Random().NextDouble() - 0.5f) * 1.5f
+                    X = WorldX - forward.X * 18,
+                    Y = WorldY - forward.Y * 18,
+                    Life = 1.8f,
+                    Size = 24 + DriftIntensity * 32,
+                    VelocityX = (float)(new Random().NextDouble() - 0.5f) * 2.2f,
+                    VelocityY = (float)(new Random().NextDouble() - 0.5f) * 2.2f
                 };
                 SmokeParticles.Add(smoke);
             }
@@ -221,11 +234,21 @@ namespace TopDownHighwayDrifter
 
         public void Draw(Graphics g)
         {
-            int alpha = (int)(Life * 150);
-            using (var brush = new SolidBrush(Color.FromArgb(alpha, 150, 150, 150)))
+            int alpha = (int)(80 * Life);
+            if (alpha < 30) alpha = 30;
+            if (alpha > 220) alpha = 220;
+            if (alpha > 255) alpha = 255;
+            if (alpha < 0) alpha = 0;
+            using (var brush = new System.Drawing.Drawing2D.LinearGradientBrush(
+                new RectangleF(X - Size / 2, Y - Size / 2, Size, Size),
+                Color.FromArgb(alpha, 240, 240, 240),
+                Color.FromArgb(0, 160, 160, 160),
+                90f))
             {
                 g.FillEllipse(brush, X - Size / 2, Y - Size / 2, Size, Size);
             }
         }
+
+        // ...удалена старая версия Draw(Graphics g)...
     }
 }
