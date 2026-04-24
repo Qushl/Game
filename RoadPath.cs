@@ -64,7 +64,6 @@ namespace TopDownHighwayDrifter
         /// </summary>
         public RoadInfo GetRoadInfoAtDistance(float distance)
         {
-            // Поиск сегмента без циклирования
             if (distance < 0) distance = 0;
 
             foreach (var segment in _segments)

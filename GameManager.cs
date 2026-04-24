@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace TopDownHighwayDrifter
 {
@@ -24,6 +26,10 @@ namespace TopDownHighwayDrifter
         private const float ScreenWidth = 800f;
         private const float ScreenHeight = 800f;
 
+        // Многопоточность
+        private object _lockObject = new object();
+        private bool _updateInProgress = false;
+
         public int Score => _score;
         public bool IsGameOver => _gameOver;
         public RoadPath RoadPath => _roadPath;
@@ -40,65 +46,88 @@ namespace TopDownHighwayDrifter
 
         public void Update()
         {
-            if (_gameOver)
+            if (_gameOver || _updateInProgress)
                 return;
 
-            // Обновляем физику игрока
-            Player.Update(0);
+            // Запускаем обновление в отдельном потоке
+            Task.Run(() => UpdateGameLogic());
+        }
 
-            // Проверяем столкновения
-            CheckCollisions();
-
-            // Создание новых врагов
-            _spawnCounter++;
-            if (_spawnCounter > _spawnRate)
+        private void UpdateGameLogic()
+        {
+            _updateInProgress = true;
+            try
             {
-                SpawnEnemy();
-                _spawnCounter = 0;
-                _spawnRate = Math.Max(20, _spawnRate - 1);
-            }
+                lock (_lockObject)
+                {
+                    if (_gameOver)
+                        return;
 
-            // Обновляем врагов по траектории дороги и удаляем тех, которые далеко позади
-            var enemiesToRemove = new List<Enemy>();
-            float playerDistanceOnRoad = -Player.WorldY;
-            foreach (var enemy in Enemies)
+                    // Проверяем, находится ли игрок на дороге
+                    Player.IsOnRoad = IsPlayerOnRoad();
+
+                    // Обновляем физику игрока
+                    Player.Update(0);
+
+                    // Проверяем столкновения
+                    CheckCollisions();
+
+                    // Создание новых врагов
+                    _spawnCounter++;
+                    if (_spawnCounter > _spawnRate)
+                    {
+                        SpawnEnemy();
+                        _spawnCounter = 0;
+                        _spawnRate = Math.Max(20, _spawnRate - 1);
+                    }
+
+                    // Обновляем врагов по траектории дороги
+                    float playerDistanceOnRoad = -Player.WorldY;
+                    
+                    // Обновляем врагов параллельно
+                    Parallel.ForEach(Enemies, enemy =>
+                    {
+                        if (enemy.IsOncoming)
+                        {
+                            enemy.Distance -= enemy.Speed;
+                        }
+                        else
+                        {
+                            enemy.Distance += enemy.Speed;
+                        }
+                        UpdateEnemyWorldPosition(enemy);
+                    });
+
+                    // Удаляем врагов, которые далеко позади
+                    Enemies.RemoveAll(enemy => 
+                    {
+                        float distToPlayer = (float)Math.Sqrt(
+                            Math.Pow(enemy.WorldX - Player.WorldX, 2) + 
+                            Math.Pow(enemy.WorldY - Player.WorldY, 2)
+                        );
+                        
+                        // Добавляем очки за проезд рядом с врагом
+                        const float passDistance = 80f; 
+                        if (distToPlayer < passDistance && !enemy.WasRewarded)
+                        {
+                            _score += 600;
+                            enemy.WasRewarded = true;
+                        }
+                        
+                        return enemy.Distance < playerDistanceOnRoad - 3000;
+                    });
+
+                    // Увеличиваем очки за каждый кадр выживания
+                    _score++;
+
+                    // Увеличиваем сложность со временем (медленнее)
+                    _spawnRate = Math.Max(35, 60 - _score / 1000);
+                }
+            }
+            finally
             {
-                if (enemy.IsOncoming)
-                {
-                    enemy.Distance -= enemy.Speed;
-                }
-                else
-                {
-                    enemy.Distance += enemy.Speed;
-                }
-                UpdateEnemyWorldPosition(enemy);
-                float distToPlayer = (float)Math.Sqrt(
-                    Math.Pow(enemy.WorldX - Player.WorldX, 2) + 
-                    Math.Pow(enemy.WorldY - Player.WorldY, 2)
-                );
-                // Добавляем очки за проезд рядом с врагом
-                const float passDistance = 80f; 
-                if (distToPlayer < passDistance && !enemy.WasRewarded)
-                {
-                    _score += 600;
-                    enemy.WasRewarded = true;
-                }
-                if (enemy.Distance < playerDistanceOnRoad - 3000)
-                {
-                    enemiesToRemove.Add(enemy);
-                }
+                _updateInProgress = false;
             }
-
-            foreach (var enemy in enemiesToRemove)
-            {
-                Enemies.Remove(enemy);
-            }
-
-            // Увеличиваем очки за каждый кадр выживания
-            _score++;
-
-            // Увеличиваем сложность со временем
-            _spawnRate = Math.Max(15, 50 - _score / 360);
         }
 
         private void SpawnEnemy()
@@ -437,6 +466,26 @@ namespace TopDownHighwayDrifter
             while (diff > Math.PI) diff -= (float)(2 * Math.PI);
             while (diff < -Math.PI) diff += (float)(2 * Math.PI);
             return current + diff * t;
+        }
+
+        private bool IsPlayerOnRoad()
+        {
+            // Получаем информацию о дороге на позиции игрока
+            float playerDistanceOnRoad = -Player.WorldY;
+            _roadPath.GetWorldPosition(playerDistanceOnRoad, out float roadCenterX, out float roadCenterY, out float roadAngle);
+
+            // Вычисляем перпендикулярное расстояние от центра дороги
+            float dx = Player.WorldX - roadCenterX;
+            float dy = Player.WorldY - roadCenterY;
+
+            // Проецируем на перпендикуляр к дороге
+            float perpX = (float)Math.Cos(roadAngle);
+            float perpY = (float)Math.Sin(roadAngle);
+            
+            float lateralDistance = Math.Abs(dx * perpX + dy * perpY);
+            
+            const float roadWidthHalf = RoadWidth / 2;
+            return lateralDistance < roadWidthHalf;
         }
 
         public void Reset()
