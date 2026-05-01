@@ -117,8 +117,18 @@ namespace TopDownHighwayDrifter
                         return enemy.Distance < playerDistanceOnRoad - 3000;
                     });
 
-                    // Увеличиваем очки за каждый кадр выживания
-                    _score++;
+
+                    // Увеличиваем или уменьшаем очки за каждый кадр
+                    if (Player.IsOnRoad)
+                    {
+                        _score++;
+                    }
+                    else
+                    {
+                        // На обочине — медленно отнимаем очки, но не уходим в минус
+                        if (_score > 0)
+                            _score -= 2; // Можно скорректировать скорость штрафа
+                    }
 
                     // Увеличиваем сложность со временем (медленнее)
                     _spawnRate = Math.Max(35, 60 - _score / 1000);

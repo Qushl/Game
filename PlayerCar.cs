@@ -9,6 +9,8 @@ namespace TopDownHighwayDrifter
     /// </summary>
     public class PlayerCar : GameObject
     {
+        // Для резкого заноса при выезде на обочину
+        private bool _wasOnRoadLastFrame = true;
         // Мировые координаты (независимые от дороги)
         public float WorldX { get; set; } = 400;
         public float WorldY { get; set; } = 400;
@@ -75,7 +77,18 @@ namespace TopDownHighwayDrifter
             {
                 effectiveTurnSpeed = TurnSpeed * 0.35f; // На траве очень сложно поворачивать
                 effectiveFriction = 0.93f; // На траве меньше трения (эффект льда)
+
+                // Резкий занос только при пересечении линии обочины
+                if (_wasOnRoadLastFrame)
+                {
+                    // Случайный угол заноса в пределах [-30, 30] градусов
+                    float randomAngle = ((float)_particleRandom.NextDouble() - 0.5f) * 0.9f; // ~50 градусов макс
+                    Angle += randomAngle;
+                }
             }
+
+            // Обновляем флаг для следующего кадра
+            _wasOnRoadLastFrame = IsOnRoad;
 
             // Управление поворотом
             if (_turningLeft)
