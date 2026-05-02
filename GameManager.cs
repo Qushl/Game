@@ -303,33 +303,34 @@ namespace TopDownHighwayDrifter
                     }
                 }
 
-                DrawRoadMarkings(g, leftEdgePoints, rightEdgePoints);
+                
                 DrawCenterLine(g, leftEdgePoints, rightEdgePoints);
             }
         }
 
         // Жёлтая пунктирная центральная линия
+        // Жёлтая пунктирная центральная линия
         private void DrawCenterLine(Graphics g, List<PointF> leftEdge, List<PointF> rightEdge)
         {
             if (leftEdge.Count < 2 || rightEdge.Count < 2)
                 return;
-            using (var pen = new Pen(Color.Yellow, 3) { DashPattern = new float[] { 16, 16 } })
+        
+            var points = new PointF[leftEdge.Count];
+        
+            for (int i = 0; i < leftEdge.Count && i < rightEdge.Count; i++)
             {
-                for (int i = 0; i < leftEdge.Count && i < rightEdge.Count; i++)
-                {
-                    var mid = new PointF(
-                        (leftEdge[i].X + rightEdge[i].X) / 2,
-                        (leftEdge[i].Y + rightEdge[i].Y) / 2
-                    );
-                    if (i > 0)
-                    {
-                        var prevMid = new PointF(
-                            (leftEdge[i - 1].X + rightEdge[i - 1].X) / 2,
-                            (leftEdge[i - 1].Y + rightEdge[i - 1].Y) / 2
-                        );
-                        g.DrawLine(pen, prevMid, mid);
-                    }
-                }
+                points[i] = new PointF(
+                    (leftEdge[i].X + rightEdge[i].X) / 2,
+                    (leftEdge[i].Y + rightEdge[i].Y) / 2
+                );
+            }
+        
+            using (var pen = new Pen(Color.Yellow, 3))
+            {
+                pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Custom;
+                pen.DashPattern = new float[] { 16, 32 };
+                pen.DashCap = System.Drawing.Drawing2D.DashCap.Flat;
+                g.DrawLines(pen, points);
             }
         }
 
