@@ -325,10 +325,15 @@ namespace TopDownHighwayDrifter
                 );
             }
         
+            // Центрируем разметку относительно дороги, чтобы не "плыла" при скорости
+            float playerDistanceOnRoad = -Player.WorldY;
+            float playerOffset = playerDistanceOnRoad % 48f; // 16+32=48 длина паттерна
+            if (playerOffset < 0) playerOffset += 48f;
             using (var pen = new Pen(Color.Yellow, 3))
             {
                 pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Custom;
                 pen.DashPattern = new float[] { 16, 32 };
+                pen.DashOffset = playerOffset;
                 pen.DashCap = System.Drawing.Drawing2D.DashCap.Flat;
                 g.DrawLines(pen, points);
             }

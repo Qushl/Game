@@ -220,59 +220,84 @@ namespace TopDownHighwayDrifter
 
             // Рисуем дым дрифта
             foreach (var smoke in SmokeParticles)
-            {
                 smoke.Draw(g);
+
+
+            // Рисуем тень
+            using (var shadowBrush = new SolidBrush(Color.FromArgb(60, 0, 0, 0)))
+            {
+                g.FillEllipse(shadowBrush, WorldX - Width * 0.3f, WorldY + Height * 0.35f, Width * 0.6f, 8);
             }
 
-            // Рисуем машину
+            // Геометрия
             float sin = (float)Math.Sin(Angle);
             float cos = (float)Math.Cos(Angle);
+            float w = Width, h = Height;
 
-            PointF front = new PointF(
-                WorldX + cos * Height / 2,
-                WorldY + sin * Height / 2
-            );
-
-            PointF back = new PointF(
-                WorldX - cos * Height / 2,
-                WorldY - sin * Height / 2
-            );
-
-            var carCorners = new PointF[]
-            {
-                new PointF(front.X - sin * Width / 2, front.Y + cos * Width / 2),
-                new PointF(front.X + sin * Width / 2, front.Y - cos * Width / 2),
-                new PointF(back.X + sin * Width / 2, back.Y - cos * Width / 2),
-                new PointF(back.X - sin * Width / 2, back.Y + cos * Width / 2)
-            };
-
-            // Кузов
+            // Кузов (основной прямоугольник)
+            PointF[] body = new PointF[4];
+            body[0] = new PointF(WorldX - sin * w / 2 - cos * h / 2, WorldY + cos * w / 2 - sin * h / 2);
+            body[1] = new PointF(WorldX + sin * w / 2 - cos * h / 2, WorldY - cos * w / 2 - sin * h / 2);
+            body[2] = new PointF(WorldX + sin * w / 2 + cos * h / 2, WorldY - cos * w / 2 + sin * h / 2);
+            body[3] = new PointF(WorldX - sin * w / 2 + cos * h / 2, WorldY + cos * w / 2 + sin * h / 2);
             using (var brush = new SolidBrush(Color))
-            {
-                g.FillPolygon(brush, carCorners);
-            }
-
-            // Контур
+                g.FillPolygon(brush, body);
             using (var pen = new Pen(Color.DarkBlue, 2))
+                g.DrawPolygon(pen, body);
+
+            // Крыша (меньше и светлее)
+            float roofW = w * 0.6f, roofH = h * 0.4f;
+            PointF roofCenter = new PointF(WorldX, WorldY - sin * h * 0.1f);
+            PointF[] roof = new PointF[4];
+            roof[0] = new PointF(roofCenter.X - sin * roofW / 2 - cos * roofH / 2, roofCenter.Y + cos * roofW / 2 - sin * roofH / 2);
+            roof[1] = new PointF(roofCenter.X + sin * roofW / 2 - cos * roofH / 2, roofCenter.Y - cos * roofW / 2 - sin * roofH / 2);
+            roof[2] = new PointF(roofCenter.X + sin * roofW / 2 + cos * roofH / 2, roofCenter.Y - cos * roofW / 2 + sin * roofH / 2);
+            roof[3] = new PointF(roofCenter.X - sin * roofW / 2 + cos * roofH / 2, roofCenter.Y + cos * roofW / 2 + sin * roofH / 2);
+            using (var brush = new SolidBrush(Color.LightSkyBlue))
+                g.FillPolygon(brush, roof);
+            using (var pen = new Pen(Color.SteelBlue, 1.2f))
+                g.DrawPolygon(pen, roof);
+
+            // Окна (два прямоугольника)
+            float winW = w * 0.22f, winH = h * 0.18f;
+            for (int i = -1; i <= 1; i += 2)
             {
-                g.DrawPolygon(pen, carCorners);
+                float wx = roofCenter.X + sin * i * winW * 0.7f;
+                float wy = roofCenter.Y - cos * i * winW * 0.7f;
+                PointF[] win = new PointF[4];
+                win[0] = new PointF(wx - sin * winW / 2 - cos * winH / 2, wy + cos * winW / 2 - sin * winH / 2);
+                win[1] = new PointF(wx + sin * winW / 2 - cos * winH / 2, wy - cos * winW / 2 - sin * winH / 2);
+                win[2] = new PointF(wx + sin * winW / 2 + cos * winH / 2, wy - cos * winW / 2 + sin * winH / 2);
+                win[3] = new PointF(wx - sin * winW / 2 + cos * winH / 2, wy + cos * winW / 2 + sin * winH / 2);
+                using (var brush = new SolidBrush(Color.WhiteSmoke))
+                    g.FillPolygon(brush, win);
+                using (var pen = new Pen(Color.LightBlue, 0.8f))
+                    g.DrawPolygon(pen, win);
             }
 
-            // Окно
-            using (var windowBrush = new SolidBrush(Color.LightBlue))
+            // Фары (спереди)
+            float fx = WorldX + cos * h / 2, fy = WorldY + sin * h / 2;
+            using (var headlightBrush = new SolidBrush(Color.FromArgb(220, 255, 255, 180)))
             {
-                float midX = (carCorners[0].X + carCorners[1].X) / 2;
-                float midY = (carCorners[0].Y + carCorners[1].Y) / 2;
-                g.FillEllipse(windowBrush, midX - 6, midY - 6, 12, 12);
+                g.FillEllipse(headlightBrush, fx - 6 - sin * w * 0.25f, fy - 4 + cos * w * 0.25f, 8, 6);
+                g.FillEllipse(headlightBrush, fx - 6 + sin * w * 0.25f, fy - 4 - cos * w * 0.25f, 8, 6);
+            }
+
+            // Задние фонари (сзади)
+            float bx = WorldX - cos * h / 2, by = WorldY - sin * h / 2;
+            using (var tailBrush = new SolidBrush(Color.Red))
+            {
+                g.FillEllipse(tailBrush, bx - 3 - sin * w * 0.25f, by - 2 + cos * w * 0.25f, 6, 4);
+                g.FillEllipse(tailBrush, bx - 3 + sin * w * 0.25f, by - 2 - cos * w * 0.25f, 6, 4);
             }
 
             // Визуализация дрифта (красное свечение)
             if (DriftIntensity > 0.2f)
             {
-                int alpha = (int)(DriftIntensity * 100);
-                using (var pen = new Pen(Color.FromArgb(alpha, 255, 0, 0), 2))
+                int driftAlpha = Math.Min(120, (int)(DriftIntensity * 180));
+                using (var driftBrush = new SolidBrush(Color.FromArgb(driftAlpha, 255, 40, 40)))
                 {
-                    g.DrawPolygon(pen, carCorners);
+                    g.FillPolygon(driftBrush, body);
                 }
             }
         }

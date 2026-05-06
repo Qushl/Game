@@ -25,28 +25,49 @@ namespace TopDownHighwayDrifter
         {
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
-            // Простой прямоугольник с закругленными углами для автомобиля
-            using (var brush = new SolidBrush(CarColor))
+            // Тень
+            using (var shadowBrush = new SolidBrush(Color.FromArgb(60, 0, 0, 0)))
             {
-                g.FillRectangle(brush, X, Y, Width, Height);
+                g.FillEllipse(shadowBrush, X + Width / 2 - Width * 0.6f / 2, Y + Height * 0.85f, Width * 0.6f, 7);
             }
 
-            // Окно машины
+            // Кузов с закруглёнными углами
+            using (var bodyPath = new System.Drawing.Drawing2D.GraphicsPath())
+            {
+                bodyPath.AddArc(X, Y, 8, 8, 180, 90);
+                bodyPath.AddArc(X + Width - 8, Y, 8, 8, 270, 90);
+                bodyPath.AddArc(X + Width - 8, Y + Height - 8, 8, 8, 0, 90);
+                bodyPath.AddArc(X, Y + Height - 8, 8, 8, 90, 90);
+                bodyPath.CloseFigure();
+                using (var brush = new SolidBrush(CarColor))
+                {
+                    g.FillPath(brush, bodyPath);
+                }
+                using (var pen = new Pen(Color.Black, 1.5f))
+                {
+                    g.DrawPath(pen, bodyPath);
+                }
+            }
+
+            // Окна
             using (var windowBrush = new SolidBrush(Color.LightBlue))
             {
-                g.FillRectangle(windowBrush, X + 2, Y + 6, Width - 4, 8);
+                g.FillRectangle(windowBrush, X + 4, Y + 6, Width - 8, 8);
             }
 
-            // Тень под машиной
-            using (var shadowBrush = new SolidBrush(Color.FromArgb(80, 0, 0, 0)))
+            // Фары
+            using (var headlightBrush = new SolidBrush(Color.FromArgb(220, 255, 255, 180)))
             {
-                g.FillEllipse(shadowBrush, X - 2, Y + Height + 2, Width + 4, 5);
+                g.FillEllipse(headlightBrush, X + Width / 2 - 4, Y - 3, 8, 6);
+                g.FillEllipse(headlightBrush, X + 3, Y - 2, 5, 4);
+                g.FillEllipse(headlightBrush, X + Width - 8, Y - 2, 5, 4);
             }
 
-            // Контур
-            using (var pen = new Pen(Color.Black, 1.5f))
+            // Задние фонари
+            using (var tailBrush = new SolidBrush(Color.Red))
             {
-                g.DrawRectangle(pen, X, Y, Width, Height);
+                g.FillEllipse(tailBrush, X + 3, Y + Height - 4, 5, 4);
+                g.FillEllipse(tailBrush, X + Width - 8, Y + Height - 4, 5, 4);
             }
         }
     }
