@@ -8,8 +8,7 @@ namespace TopDownHighwayDrifter
         public float Speed { get; set; }
         public Color CarColor { get; set; }
 
-        public EnemyCar(float x, float y, float speed, Color color) 
-            : base(x, y, 18, 28)
+        public EnemyCar(float x, float y, float speed, Color color) : base(x, y, 18, 28)
         {
             Speed = speed;
             CarColor = color;
@@ -25,13 +24,11 @@ namespace TopDownHighwayDrifter
         {
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
-            // Тень
             using (var shadowBrush = new SolidBrush(Color.FromArgb(60, 0, 0, 0)))
             {
                 g.FillEllipse(shadowBrush, X + Width / 2 - Width * 0.6f / 2, Y + Height * 0.85f, Width * 0.6f, 7);
             }
 
-            // Кузов с закруглёнными углами
             using (var bodyPath = new System.Drawing.Drawing2D.GraphicsPath())
             {
                 bodyPath.AddArc(X, Y, 8, 8, 180, 90);
@@ -39,23 +36,15 @@ namespace TopDownHighwayDrifter
                 bodyPath.AddArc(X + Width - 8, Y + Height - 8, 8, 8, 0, 90);
                 bodyPath.AddArc(X, Y + Height - 8, 8, 8, 90, 90);
                 bodyPath.CloseFigure();
-                using (var brush = new SolidBrush(CarColor))
-                {
-                    g.FillPath(brush, bodyPath);
-                }
-                using (var pen = new Pen(Color.Black, 1.5f))
-                {
-                    g.DrawPath(pen, bodyPath);
-                }
+                using (var brush = new SolidBrush(CarColor)) g.FillPath(brush, bodyPath);
+                using (var pen = new Pen(Color.Black, 1.5f)) g.DrawPath(pen, bodyPath);
             }
 
-            // Окна
             using (var windowBrush = new SolidBrush(Color.LightBlue))
             {
                 g.FillRectangle(windowBrush, X + 4, Y + 6, Width - 8, 8);
             }
 
-            // Фары
             using (var headlightBrush = new SolidBrush(Color.FromArgb(220, 255, 255, 180)))
             {
                 g.FillEllipse(headlightBrush, X + Width / 2 - 4, Y - 3, 8, 6);
@@ -63,7 +52,6 @@ namespace TopDownHighwayDrifter
                 g.FillEllipse(headlightBrush, X + Width - 8, Y - 2, 5, 4);
             }
 
-            // Задние фонари
             using (var tailBrush = new SolidBrush(Color.Red))
             {
                 g.FillEllipse(tailBrush, X + 3, Y + Height - 4, 5, 4);

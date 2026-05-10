@@ -5,34 +5,69 @@ using System.Collections.Generic;
 namespace TopDownHighwayDrifter
 {
     /// <summary>
-    /// Автомобиль игрока на основе мировых координат
+    /// Автомобиль игрока
     /// </summary>
     public class PlayerCar : GameObject
     {
-        // Для резкого заноса при выезде на обочину
+        public enum CarModelType
+        {
+            Default,
+            Straight,
+            Sideways
+        }
+
+        public CarModelType Model { get; private set; } = CarModelType.Default;
+
+        public void SetModel(CarModelType model)
+        {
+            Model = model;
+            switch (model)
+            {
+                case CarModelType.Default:
+                    Width = 32;
+                    Height = 48;
+                    Color = Color.CornflowerBlue;
+                    TurnSpeed = 0.09f;
+                    Acceleration = 0.30f;
+                    MaxSpeed = 10f;
+                    Friction = 0.97f;
+                    DriftFactor = 0.92f;
+                    break;
+                case CarModelType.Straight:
+                    Width = 30;
+                    Height = 46;
+                    Color = Color.LightSteelBlue;
+                    TurnSpeed = 0.095f;
+                    Acceleration = 0.34f;
+                    MaxSpeed = 11.5f;
+                    Friction = 0.975f;
+                    DriftFactor = 0.6f;
+                    break;
+                case CarModelType.Sideways:
+                    Width = 32;
+                    Height = 48;
+                    Color = Color.MediumPurple;
+                    TurnSpeed = 0.09f;
+                    Acceleration = 0.30f;
+                    MaxSpeed = 10f;
+                    Friction = 0.97f;
+                    DriftFactor = 0.985f;
+                    break;
+            }
+        }
+
         private bool _wasOnRoadLastFrame = true;
-        // Мировые координаты (независимые от дороги)
         public float WorldX { get; set; } = 400;
         public float WorldY { get; set; } = 400;
-        
-        // Угол поворота машины в радианах
-        public float Angle { get; set; } = (float)(-Math.PI / 2); 
-        
-        // Вектор скорости
+        public float Angle { get; set; } = (float)(-Math.PI / 2);
         public Vector2 Velocity { get; set; } = Vector2.Zero;
-        
-        // Управление
         public float TurnSpeed { get; set; } = 0.08f;
         public float Acceleration { get; set; } = 0.3f;
         public float MaxSpeed { get; set; } = 10f;
         public float Friction { get; set; } = 0.97f;
         public float DriftFactor { get; set; } = 0.97f;
-
-        // Дрифт-эффекты
         public float DriftIntensity { get; private set; } = 0;
         public List<DriftSmoke> SmokeParticles { get; private set; } = new List<DriftSmoke>();
-        
-        // Состояние дороги
         public bool IsOnRoad { get; set; } = true;
         private Random _particleRandom = new Random();
 
@@ -41,18 +76,17 @@ namespace TopDownHighwayDrifter
         private bool _isAccelerating = false;
         private bool _isBraking = false;
 
-        public PlayerCar() : base(0, 0, 18, 28)
+        public PlayerCar() : base(0, 0, 32, 48)
         {
-            Color = Color.CornflowerBlue;
-            // Тестовая инициализация дыма для проверки
+            SetModel(Model);
             for (int i = 0; i < 10; i++)
             {
                 SmokeParticles.Add(new DriftSmoke
                 {
                     X = WorldX,
-                    Y = WorldY + i * 5,
+                    Y = WorldY + i * (Height * 0.12f),
                     Life = 1.0f - i * 0.08f,
-                    Size = 20 + i * 2,
+                    Size = 12 + i * 3,
                     VelocityX = 0,
                     VelocityY = 0
                 });
@@ -69,44 +103,31 @@ namespace TopDownHighwayDrifter
 
         public override void Update(float scrollSpeed)
         {
-            // Эффекты травы 
             float effectiveTurnSpeed = TurnSpeed;
             float effectiveFriction = Friction;
-            
+
             if (!IsOnRoad)
             {
-                effectiveTurnSpeed = TurnSpeed * 0.35f; // На траве очень сложно поворачивать
-                effectiveFriction = 0.93f; // На траве меньше трения (эффект льда)
+                effectiveTurnSpeed = TurnSpeed * 0.35f;
+                effectiveFriction = 0.93f;
 
-                // Резкий занос только при пересечении линии обочины
                 if (_wasOnRoadLastFrame)
                 {
-                    // Случайный угол заноса в пределах [-30, 30] градусов
-                    float randomAngle = ((float)_particleRandom.NextDouble() - 0.5f) * 0.9f; // ~50 градусов макс
+                    float randomAngle = ((float)_particleRandom.NextDouble() - 0.5f) * 0.9f;
                     Angle += randomAngle;
                 }
             }
 
-            // Обновляем флаг для следующего кадра
             _wasOnRoadLastFrame = IsOnRoad;
 
-            // Управление поворотом
-            if (_turningLeft)
-                Angle -= effectiveTurnSpeed;
-            if (_turningRight)
-                Angle += effectiveTurnSpeed;
+            if (_turningLeft) Angle -= effectiveTurnSpeed;
+            if (_turningRight) Angle += effectiveTurnSpeed;
 
-            // Применяем ограничение угла от -180 до 180 градусов
             while (Angle > Math.PI) Angle -= (float)(2 * Math.PI);
             while (Angle < -Math.PI) Angle += (float)(2 * Math.PI);
 
-            // Вектор направления
-            Vector2 forward = new Vector2(
-                (float)Math.Cos(Angle),
-                (float)Math.Sin(Angle)
-            );
+            Vector2 forward = new Vector2((float)Math.Cos(Angle), (float)Math.Sin(Angle));
 
-            // Ускорение / Тормоз
             if (_isAccelerating)
             {
                 Velocity = Velocity + (forward * Acceleration);
@@ -116,35 +137,45 @@ namespace TopDownHighwayDrifter
                 Velocity = Velocity - (forward * Acceleration * 0.5f);
             }
 
-            // Ограничение скорости
             float speed = Velocity.Length();
             if (speed > MaxSpeed)
             {
                 Velocity = Velocity.Normalize() * MaxSpeed;
             }
 
-            // Дрифт - увеличенный, и ещё больше на траве (эффект обочины)
             float effectiveDriftFactor = DriftFactor;
-            if (!IsOnRoad)
-            {
-                effectiveDriftFactor = 0.99f; // Намного сильнее занос на траве
-            }
+            if (!IsOnRoad) effectiveDriftFactor = 0.99f;
 
             if (speed > 0.5f)
             {
-                Vector2 desiredDirection = forward * speed;
-                // За кадр скорость меняется в сторону желаемого направления меньше
-                Velocity = Vector2.Lerp(Velocity, desiredDirection, 1 - effectiveDriftFactor);
+                Vector2 desiredDirection;
+                float lerpWeight;
+
+                switch (Model)
+                {
+                    case CarModelType.Straight:
+                        desiredDirection = forward * speed;
+                        lerpWeight = Math.Clamp(1 - effectiveDriftFactor + 0.35f, 0.05f, 0.98f);
+                        break;
+                    case CarModelType.Sideways:
+                        desiredDirection = forward * speed;
+                        lerpWeight = Math.Clamp(1 - effectiveDriftFactor + 0.05f, 0.02f, 0.7f);
+                        break;
+                    default:
+                        desiredDirection = forward * speed;
+                        lerpWeight = Math.Clamp(1 - effectiveDriftFactor, 0.02f, 0.6f);
+                        break;
+                }
+
+                Velocity = Vector2.Lerp(Velocity, desiredDirection, lerpWeight);
             }
 
-            // Трение
             Velocity = Velocity * effectiveFriction;
 
-            // Интенсивность заноса
             if (speed > 0.1f)
             {
                 Vector2 normalizedVelocity = Velocity.Normalize();
-                float dot = normalizedVelocity.DotProduct(forward); // cos
+                float dot = normalizedVelocity.DotProduct(forward);
                 DriftIntensity = Math.Max(0, 1 - Math.Abs(dot)) * speed / MaxSpeed;
             }
             else
@@ -152,19 +183,17 @@ namespace TopDownHighwayDrifter
                 DriftIntensity = 0;
             }
 
-            // Дым при заносе (белый дым) - только на дороге, при любом дрифте
             if (IsOnRoad && DriftIntensity > 0.05f && speed > 0.5f)
             {
-                // Генерируем несколько частиц дыма за кадр для более плотного эффекта
                 int smokeCount = (int)(1 + DriftIntensity * 3);
                 for (int i = 0; i < smokeCount; i++)
                 {
                     var smoke = new DriftSmoke
                     {
-                        X = WorldX - forward.X * 18 + (float)(_particleRandom.NextDouble() - 0.5f) * 15,
-                        Y = WorldY - forward.Y * 18 + (float)(_particleRandom.NextDouble() - 0.5f) * 15,
+                        X = WorldX - forward.X * (Height * 0.36f) + (float)(_particleRandom.NextDouble() - 0.5f) * (Width * 0.5f),
+                        Y = WorldY - forward.Y * (Height * 0.36f) + (float)(_particleRandom.NextDouble() - 0.5f) * (Width * 0.5f),
                         Life = 1.8f,
-                        Size = 18 + DriftIntensity * 28,
+                        Size = Math.Max(12f, Height * 0.32f + DriftIntensity * 28f),
                         VelocityX = (float)(_particleRandom.NextDouble() - 0.5f) * 2.5f,
                         VelocityY = (float)(_particleRandom.NextDouble() - 0.5f) * 2.5f,
                         IsGrass = false
@@ -173,15 +202,14 @@ namespace TopDownHighwayDrifter
                 }
             }
 
-            // Зелёные частицы на траве
             if (!IsOnRoad && speed > 0.5f)
             {
                 var grassSmoke = new DriftSmoke
                 {
-                    X = WorldX - forward.X * 18 + (float)(_particleRandom.NextDouble() - 0.5f) * 20,
-                    Y = WorldY - forward.Y * 18 + (float)(_particleRandom.NextDouble() - 0.5f) * 20,
+                    X = WorldX - forward.X * (Height * 0.36f) + (float)(_particleRandom.NextDouble() - 0.5f) * (Width * 0.6f),
+                    Y = WorldY - forward.Y * (Height * 0.36f) + (float)(_particleRandom.NextDouble() - 0.5f) * (Width * 0.6f),
                     Life = 1.2f,
-                    Size = 12 + (float)_particleRandom.NextDouble() * 12,
+                    Size = Math.Max(10f, Height * 0.22f + (float)_particleRandom.NextDouble() * 12f),
                     VelocityX = (float)(_particleRandom.NextDouble() - 0.5f) * 3.0f,
                     VelocityY = (float)(_particleRandom.NextDouble() - 0.5f) * 3.0f,
                     IsGrass = true
@@ -189,7 +217,6 @@ namespace TopDownHighwayDrifter
                 SmokeParticles.Add(grassSmoke);
             }
 
-            // Обновляем дым
             for (int i = SmokeParticles.Count - 1; i >= 0; i--)
             {
                 SmokeParticles[i].Life -= 0.03f;
@@ -201,15 +228,12 @@ namespace TopDownHighwayDrifter
                     SmokeParticles.RemoveAt(i);
             }
 
-            // Ограничиваем частицы
             while (SmokeParticles.Count > 250)
                 SmokeParticles.RemoveAt(0);
 
-            // Перемещаем машину
             WorldX += Velocity.X;
             WorldY += Velocity.Y;
 
-            // Обновляем базовую позицию 
             X = WorldX;
             Y = WorldY;
         }
@@ -218,23 +242,18 @@ namespace TopDownHighwayDrifter
         {
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
-            // Рисуем дым дрифта
             foreach (var smoke in SmokeParticles)
                 smoke.Draw(g);
 
-
-            // Рисуем тень
             using (var shadowBrush = new SolidBrush(Color.FromArgb(60, 0, 0, 0)))
             {
                 g.FillEllipse(shadowBrush, WorldX - Width * 0.3f, WorldY + Height * 0.35f, Width * 0.6f, 8);
             }
 
-            // Геометрия
             float sin = (float)Math.Sin(Angle);
             float cos = (float)Math.Cos(Angle);
             float w = Width, h = Height;
 
-            // Кузов (основной прямоугольник)
             PointF[] body = new PointF[4];
             body[0] = new PointF(WorldX - sin * w / 2 - cos * h / 2, WorldY + cos * w / 2 - sin * h / 2);
             body[1] = new PointF(WorldX + sin * w / 2 - cos * h / 2, WorldY - cos * w / 2 - sin * h / 2);
@@ -245,7 +264,6 @@ namespace TopDownHighwayDrifter
             using (var pen = new Pen(Color.DarkBlue, 2))
                 g.DrawPolygon(pen, body);
 
-            // Крыша (меньше и светлее)
             float roofW = w * 0.6f, roofH = h * 0.4f;
             PointF roofCenter = new PointF(WorldX, WorldY - sin * h * 0.1f);
             PointF[] roof = new PointF[4];
@@ -258,7 +276,6 @@ namespace TopDownHighwayDrifter
             using (var pen = new Pen(Color.SteelBlue, 1.2f))
                 g.DrawPolygon(pen, roof);
 
-            // Окна (два прямоугольника)
             float winW = w * 0.22f, winH = h * 0.18f;
             for (int i = -1; i <= 1; i += 2)
             {
@@ -275,7 +292,6 @@ namespace TopDownHighwayDrifter
                     g.DrawPolygon(pen, win);
             }
 
-            // Фары (спереди)
             float fx = WorldX + cos * h / 2, fy = WorldY + sin * h / 2;
             using (var headlightBrush = new SolidBrush(Color.FromArgb(220, 255, 255, 180)))
             {
@@ -283,15 +299,24 @@ namespace TopDownHighwayDrifter
                 g.FillEllipse(headlightBrush, fx - 6 + sin * w * 0.25f, fy - 4 - cos * w * 0.25f, 8, 6);
             }
 
-            // Задние фонари (сзади)
             float bx = WorldX - cos * h / 2, by = WorldY - sin * h / 2;
-            using (var tailBrush = new SolidBrush(Color.Red))
+            if (_isBraking)
             {
-                g.FillEllipse(tailBrush, bx - 3 - sin * w * 0.25f, by - 2 + cos * w * 0.25f, 6, 4);
-                g.FillEllipse(tailBrush, bx - 3 + sin * w * 0.25f, by - 2 - cos * w * 0.25f, 6, 4);
+                using (var tailBrush = new SolidBrush(Color.FromArgb(255, 255, 40, 40)))
+                {
+                    g.FillEllipse(tailBrush, bx - 3 - sin * w * 0.25f, by - 2 + cos * w * 0.25f, 7, 5);
+                    g.FillEllipse(tailBrush, bx - 3 + sin * w * 0.25f, by - 2 - cos * w * 0.25f, 7, 5);
+                }
+            }
+            else
+            {
+                using (var tailBrush = new SolidBrush(Color.FromArgb(180, 120, 0, 0)))
+                {
+                    g.FillEllipse(tailBrush, bx - 3 - sin * w * 0.25f, by - 2 + cos * w * 0.25f, 6, 4);
+                    g.FillEllipse(tailBrush, bx - 3 + sin * w * 0.25f, by - 2 - cos * w * 0.25f, 6, 4);
+                }
             }
 
-            // Визуализация дрифта (красное свечение)
             if (DriftIntensity > 0.2f)
             {
                 int driftAlpha = Math.Min(120, (int)(DriftIntensity * 180));
@@ -323,7 +348,6 @@ namespace TopDownHighwayDrifter
 
             if (IsGrass)
             {
-                // Зелёные частицы для травы
                 using (var brush = new System.Drawing.Drawing2D.LinearGradientBrush(
                     new RectangleF(X - Size / 2, Y - Size / 2, Size, Size),
                     Color.FromArgb(alpha, 100, 200, 100),
@@ -335,7 +359,6 @@ namespace TopDownHighwayDrifter
             }
             else
             {
-                // Белые частицы для дрифта
                 using (var brush = new System.Drawing.Drawing2D.LinearGradientBrush(
                     new RectangleF(X - Size / 2, Y - Size / 2, Size, Size),
                     Color.FromArgb(alpha, 240, 240, 240),
@@ -346,7 +369,5 @@ namespace TopDownHighwayDrifter
                 }
             }
         }
-
-        // ...удалена старая версия Draw(Graphics g)...
     }
 }

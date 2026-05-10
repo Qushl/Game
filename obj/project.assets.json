@@ -8,24 +8,32 @@
     "net9.0-windows7.0": []
   },
   "packageFolders": {
-    "C:\\Users\\hovic\\.nuget\\packages\\": {}
+    "C:\\Users\\vipio\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\hovic\\OneDrive\\Рабочий стол\\romka\\Game\\Game\\TopDownHighwayDrifter.csproj",
+      "projectUniqueName": "C:\\Users\\vipio\\Desktop\\Proger\\Game\\Game\\TopDownHighwayDrifter.csproj",
       "projectName": "TopDownHighwayDrifter",
-      "projectPath": "C:\\Users\\hovic\\OneDrive\\Рабочий стол\\romka\\Game\\Game\\TopDownHighwayDrifter.csproj",
-      "packagesPath": "C:\\Users\\hovic\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\hovic\\OneDrive\\Рабочий стол\\romka\\Game\\Game\\obj\\",
+      "projectPath": "C:\\Users\\vipio\\Desktop\\Proger\\Game\\Game\\TopDownHighwayDrifter.csproj",
+      "packagesPath": "C:\\Users\\vipio\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\vipio\\Desktop\\Proger\\Game\\Game\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
       "configFilePaths": [
-        "C:\\Users\\hovic\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\vipio\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net9.0-windows"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -68,7 +76,7 @@
             "privateAssets": "none"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.313/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
