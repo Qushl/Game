@@ -79,26 +79,33 @@ public partial class Form1 : Form
 
     private void Form1_KeyDown(object sender, KeyEventArgs e)
     {
+        bool handled = false;
         switch (e.KeyCode)
         {
-            case Keys.A: _keyLeft = true; break;
-            case Keys.D: _keyRight = true; break;
-            case Keys.W: _keyUp = true; break;
-            case Keys.S: _keyDown = true; break;
-            case Keys.R: if (_gameManager.IsGameOver) _gameManager.Reset(); break;
-            case Keys.Escape: this.Close(); break;
+            case Keys.A: _keyLeft = true; handled = true; break;
+            case Keys.D: _keyRight = true; handled = true; break;
+            case Keys.W: _keyUp = true; handled = true; break;
+            case Keys.S: _keyDown = true; handled = true; break;
+            case Keys.R: if (_gameManager.IsGameOver) { _gameManager.Reset(); handled = true; } break;
+            case Keys.Escape: this.Close(); handled = true; break;
+        }
+        if (handled)
+        {
+            e.SuppressKeyPress = true;
         }
     }
 
     private void Form1_KeyUp(object sender, KeyEventArgs e)
     {
+        bool handled = false;
         switch (e.KeyCode)
         {
-            case Keys.A: _keyLeft = false; break;
-            case Keys.D: _keyRight = false; break;
-            case Keys.W: _keyUp = false; break;
-            case Keys.S: _keyDown = false; break;
+            case Keys.A: _keyLeft = false; handled = true; break;
+            case Keys.D: _keyRight = false; handled = true; break;
+            case Keys.W: _keyUp = false; handled = true; break;
+            case Keys.S: _keyDown = false; handled = true; break;
         }
+        if (handled) e.SuppressKeyPress = true;
     }
 
     private void BtnApplySettings_Click(object? sender, EventArgs e)
