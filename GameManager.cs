@@ -51,7 +51,7 @@ namespace TopDownHighwayDrifter
         public void Update()
         {
             if (_gameOver || _updateInProgress) return;
-            Task.Run(() => UpdateGameLogic());
+            UpdateGameLogic();
         }
 
         private void UpdateGameLogic()
@@ -173,7 +173,7 @@ namespace TopDownHighwayDrifter
 
         public void DrawGame(Graphics g, int screenWidth, int screenHeight)
         {
-            g.Clear(Color.FromArgb(34, 139, 34));
+            g.Clear(Color.Gray);
             var state = g.Save();
 
             g.TranslateTransform(screenWidth / 2, screenHeight / 2);
@@ -276,8 +276,6 @@ namespace TopDownHighwayDrifter
                 pen.StartCap = System.Drawing.Drawing2D.LineCap.Flat;
                 pen.EndCap = System.Drawing.Drawing2D.LineCap.Flat;
 
-                float phase = distances[0] % cycle;
-                if (phase < 0) phase += cycle;
 
                 for (int i = 0; i < points.Count - 1; i++)
                 {
@@ -288,10 +286,16 @@ namespace TopDownHighwayDrifter
                     float dx = b.X - a.X;
                     float dy = b.Y - a.Y;
 
+                    float segStartPhase = distances[i] % cycle;
+                    if (segStartPhase < 0) segStartPhase += cycle;
+
                     float segPos = 0f;
                     while (segPos < segPathLen - 0.001f)
                     {
-                        float posInCycle = phase % cycle;
+                        float posInCycle = segStartPhase + segPos;
+                        posInCycle %= cycle;
+                        if (posInCycle < 0) posInCycle += cycle;
+
                         if (posInCycle < dashLen)
                         {
                             float canDraw = Math.Min(dashLen - posInCycle, segPathLen - segPos);
@@ -303,13 +307,11 @@ namespace TopDownHighwayDrifter
                             var ey = a.Y + dy * t1;
                             g.DrawLine(pen, sx, sy, ex, ey);
                             segPos += canDraw;
-                            phase += canDraw;
                         }
                         else
                         {
                             float skip = Math.Min(cycle - posInCycle, segPathLen - segPos);
                             segPos += skip;
-                            phase += skip;
                         }
                     }
                 }
