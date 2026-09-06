@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TopDownHighwayDrifter")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+44403b8f9c390fe46f9bbee2c8dd987f618b2874")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c70dc9e5675ab30d0767b2855bff8684e6841e11")]
 [assembly: System.Reflection.AssemblyProductAttribute("TopDownHighwayDrifter")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TopDownHighwayDrifter")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
